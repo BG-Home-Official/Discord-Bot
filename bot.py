@@ -5,33 +5,33 @@ import random
 import string  
 import base64  
 import requests  
-  
+
+from keep_alive import keep_alive
+
 intents = discord.Intents.default()  
 intents.message_content = True  
 intents.members = True  
-  
+
+keep_alive()
+
 client = discord.Client(intents=intents)  
-  
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  
-REPO = "BG-Home-Official/Script"  
-FILE_PATH = "Key"  
-BRANCH = "main"  
-url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"  
+
+url = "https://api.github.com/repos/BG-Home-Official/Script/contents/Key"  
   
 def generate(length=12):  
     characters = string.ascii_letters + string.digits  
     return ''.join(random.choice(characters) for _ in range(length))  
-  
+ 
 def update():  
     passwords = generate(length=12)  
-    print("Generated password:", passwords)  
+    print("Generated password:", passwords)
     new_content = passwords  
     headers = {  
-        "Authorization": f"token {GITHUB_TOKEN}",  
-        "Accept": "application/vnd.github.v3+json"  
+        "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",  
+        "Accept": "application/vnd.github.v3+json"
     }  
   
-    response = requests.get(url, headers=headers, params={"ref": BRANCH})  
+    response = requests.get(url, headers=headers, params={"ref": "main"})  
     response.raise_for_status()  
     file_info = response.json()  
     sha = file_info["sha"]  
@@ -41,8 +41,8 @@ def update():
     payload = {  
         "message": "Update file via script",  
         "content": b64_content,  
-        "branch": BRANCH,  
-        "sha": sha  
+        "branch": "main",  
+        "sha": sha
     }  
   
     put_response = requests.put(url, headers=headers, json=payload)  
@@ -50,7 +50,7 @@ def update():
   
 @client.event  
 async def on_message(msg):  
-    if msg.author == client.user:  
+    if msg.author == client.user or msg.guild is None:
         return
     
     if msg.channel.id not in [1390208355867295916, 1419532992212111420]:
@@ -70,17 +70,17 @@ async def on_message(msg):
   
 @client.event  
 async def on_ready():  
+    if not hasattr(client, "update_task"):
+        client.update_task = client.loop.create_task(loop_update())
     print(f"Bot logged in as {client.user}")  
     
-    client.loop.create_task(loop_update())  
-  
 async def loop_update():  
     while True:  
         try:  
             update()  
         except Exception as e:  
             print("Error while updating:", e)  
-        await asyncio.sleep(86400)
+        await asyncio.sleep(86400) 
   
 if __name__ == "__main__":
     client.run(os.getenv("DISCORD_TOKEN"))
