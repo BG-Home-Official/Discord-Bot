@@ -1,14 +1,10 @@
 import discord
 import os
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-
-from keep_alive import keep_alive
-
-keep_alive()
+TOKEN = os.getenv("DISCORD_TOKEN")  # Or replace with your bot token string
 
 intents = discord.Intents.default()
-intents.message_content = True  # Required to read messages
+intents.message_content = True  # Needed to read messages
 
 client = discord.Client(intents=intents)
 
@@ -18,11 +14,9 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    # Prevent the bot from replying to itself
-    if message.author == client.user:
+    if message.author == client.user:  # Prevent replying to itself
         return
     
-    # Reply to every message with "Hi"
     await message.channel.send("Hi")
 
 client.run(TOKEN)
